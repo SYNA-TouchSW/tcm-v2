@@ -1,0 +1,112 @@
+/*
+ * Synaptics TCM touchscreen driver
+ *
+ * Copyright (C) 2017-2025 Synaptics Incorporated. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION DOES
+ * NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES, SYNAPTICS'
+ * TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT EXCEED ONE HUNDRED U.S.
+ * DOLLARS.
+ */
+
+
+/* An example configuration of Synaptics TouchComm TouchIC */
+
+/ {
+
+	fragment@0 {
+		target = <&i2c0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			synaptics-tcm-i2c@4b {
+				compatible = "synaptics,tcm-i2c";
+				reg = <0x4b>;
+				pinctrl-names = "i2c_attn", "i2c_pins";
+				pinctrl-0 = <&syna_i2c_attn_pins>;
+
+
+				/* An example of declaration for attention
+				 */
+				interrupt-parent = <&gpio>;
+				interrupts = <24 0x2008>;  /* IRQF_ONESHOT | IRQF_TRIGGER_LOW */
+				synaptics,irq-gpio = <&gpio 24 0x2008>;
+				synaptics,irq-flags = <0x2008>;
+				synaptics,irq-on-state = <0>;
+
+
+				/* An example of power related settings
+				 * Please refer to the TouchIC's specification to learn the power sequence
+				 * For example
+				 *                             ______________
+				 * VDD                        |
+				 * (assuming        )  _______| power-on-delay-ms
+				 *  power-on-state=1          <--> __________
+				 * VIO                             |
+				 * (assuming        )  ____________|
+				 *  power-on-state=1                <--> power-on-delay-ms
+				 *
+				 */
+				synaptics,power-delay-ms = <50>;  /* the delay time after the completion of power sequence */
+				synaptics,power-on-state = <1>;
+
+				synaptics,vdd-control = <2>; /* 1: REGULATOR , 2: GPIO */
+				synaptics,vdd-gpio = <&gpio 18 0x0000>;
+				synaptics,vdd-power-on-delay-ms = <1>;
+				synaptics,vdd-power-off-delay-ms = <0>;
+
+				synaptics,vio-control = <2>; /* 1: REGULATOR , 2: GPIO */
+				synaptics,vio-gpio = <&gpio 19 0x0000>;
+				synaptics,vio-power-on-delay-ms = <200>;
+				synaptics,vio-power-off-delay-ms = <0>;
+
+
+				/* An example of reset related settings
+				 * Please refer to the TouchIC's specification to learn the waveform to reset,
+				 * where 'reset-active' represents the time holding on the reset state and
+				 * 'reset-delay' is the time from non-reset state to communication
+				 * For example
+				 *                     _______                    ____________________
+				 * reset                      |                   |
+				 * (assuming        )         |___________________|
+				 *  reset-on-state=0           <-- reset-active --> <-- reset-delay -->
+				 */
+				synaptics,reset-gpio = <&gpio 27 0x0000>;
+				synaptics,reset-on-state = <0>;
+				synaptics,reset-active-ms = <50>;
+				synaptics,reset-delay-ms = <200>;
+
+
+				/* An example of settings for product specific timing
+				 * Please refer to the TouchIC's specification to get more information.
+				 */
+				synaptics,chunks = <2048 2048>;  /* [0] READ chunks , [1] WRITE chunks */
+				synaptics,command-timeout-ms = <3000>;
+				synaptics,command-polling-ms = <20>;
+				synaptics,command-turnaround-us = <100>;
+				synaptics,command-retry-ms = <10>;
+				synaptics,fw-switch-delay-ms = <100>;
+			};
+		};
+	};
+};
